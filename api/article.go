@@ -1,14 +1,17 @@
 package api
 
 import (
+	"fmt"
+
+	"github.com/ilmsg/hardened-potential/helper"
 	"github.com/ilmsg/hardened-potential/model"
 	"github.com/ilmsg/hardened-potential/slug"
 	"gorm.io/gorm"
 )
 
 type IArticleHandler interface {
-	NewArticle(title string) (*model.Article, error)
-	FindAllArticle() (*[]model.Article, error)
+	NewArticle(title string, userId string) (*model.Article, error)
+	FindAllArticle() ([]model.Article, error)
 	FindArticle(articleId string) (*model.Article, error)
 }
 
@@ -16,10 +19,11 @@ type ArticleHandler struct {
 	db *gorm.DB
 }
 
-func (h *ArticleHandler) NewArticle(title string) (*model.Article, error) {
+func (h *ArticleHandler) NewArticle(title string, userId string) (*model.Article, error) {
 	newArticle := model.Article{
-		ID:    slug.GenerateSlug(),
-		Title: title,
+		ID:     slug.GenerateSlug(),
+		Title:  fmt.Sprintf("%s %s", helper.PickRandomEmoji(), title),
+		UserId: userId,
 	}
 	if tx := h.db.Create(&newArticle); tx.Error != nil {
 		return nil, tx.Error
@@ -32,12 +36,12 @@ func (h *ArticleHandler) NewArticle(title string) (*model.Article, error) {
 	return &article, nil
 }
 
-func (h *ArticleHandler) FindAllArticle() (*[]model.Article, error) {
+func (h *ArticleHandler) FindAllArticle() ([]model.Article, error) {
 	var articles []model.Article
 	if tx := h.db.Find(&articles); tx.Error != nil {
 		return nil, tx.Error
 	}
-	return &articles, nil
+	return articles, nil
 }
 
 func (h *ArticleHandler) FindArticle(articleId string) (*model.Article, error) {
